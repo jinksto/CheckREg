@@ -23,31 +23,107 @@ namespace CheckReg
                 InitializeComponent();
                 dataGridView1.CellMouseEnter += DataGridView1_CellMouseEnter;
                 dataGridView1.CellMouseLeave += DataGridView1_CellMouseLeave;
-                
+
                 // Initialize status bar
                 InitializeStatusBar();
+
+                // Auto-load checkReg.csv if present
+                string appDir = AppDomain.CurrentDomain.BaseDirectory;
+                string autoLoadPath = Path.Combine(appDir, "checkReg.csv");
+                if (File.Exists(autoLoadPath))
+                {
+                    LoadData(autoLoadPath);
+                }
             }
             catch (Exception ex)
             {
                 HandleException(ex, "Initializing application");
             }
         }
-        
+
+        // Overload LoadData to accept a file path
+        private void LoadData(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    MessageBox.Show($"File not found: {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                DataTable dt = new DataTable();
+                using (var reader = new StreamReader(filePath))
+                {
+                    bool isFirstLine = true;
+                    int lineNumber = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        lineNumber++;
+                        var line = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+
+                        var values = line.Split(',');
+
+                        if (isFirstLine)
+                        {
+                            dt.Columns.Add(values[0].Trim(), typeof(int));
+                            for (int i = 1; i < values.Length; i++)
+                                dt.Columns.Add(values[i].Trim(), typeof(string));
+                            isFirstLine = false;
+                        }
+                        else
+                        {
+                            if (!int.TryParse(values[0], out int intVal))
+                            {
+                                MessageBox.Show(
+                                    $"Error: The value '{values[0]}' in the first column is not an integer.",
+                                    "Invalid Data",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error
+                                );
+                                return;
+                            }
+                            object[] row = new object[values.Length];
+                            row[0] = intVal;
+                            for (int i = 1; i < values.Length; i++)
+                                row[i] = values[i];
+                            dt.Rows.Add(row);
+                        }
+                    }
+                }
+
+                originalDataTable = dt.Copy();
+                dataGridView1.DataSource = dt;
+                ResizeColumnsToContent();
+                dataGridView1.Resize -= DataGridView1_Resize;
+                dataGridView1.Resize += DataGridView1_Resize;
+
+                // Update status bar with row count
+                UpdateStatus($"Rows: {dt.Rows.Count}", $"File: {Path.GetFileName(filePath)}");
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex, $"Loading data from '{filePath}'");
+            }
+        }
+
         private void InitializeStatusBar()
         {
             statusStrip = new StatusStrip();
             rowCountLabel = new ToolStripStatusLabel { BorderSides = ToolStripStatusLabelBorderSides.Right };
             filterStatusLabel = new ToolStripStatusLabel { Spring = true, TextAlign = ContentAlignment.MiddleLeft };
-            
+
             statusStrip.Items.Add(rowCountLabel);
             statusStrip.Items.Add(filterStatusLabel);
-            
+
             this.Controls.Add(statusStrip);
-            
+
             // Set initial status
             UpdateStatus("No data loaded", "");
         }
-        
+
         private void UpdateStatus(string rowCount, string filterInfo)
         {
             try
@@ -89,7 +165,7 @@ namespace CheckReg
         private void LoadData()
         {
             string filePath = "regdata.csv";
-            
+
             try
             {
                 if (!File.Exists(filePath))
@@ -116,20 +192,20 @@ namespace CheckReg
                 }
 
                 DataTable dt = new DataTable();
-                
+
                 try
                 {
                     using (var reader = new StreamReader(filePath))
                     {
                         bool isFirstLine = true;
                         int lineNumber = 0;
-                        
+
                         while (!reader.EndOfStream)
                         {
                             lineNumber++;
                             var line = reader.ReadLine();
                             if (string.IsNullOrWhiteSpace(line)) continue;
-                            
+
                             try
                             {
                                 var values = line.Split(',');
@@ -149,13 +225,13 @@ namespace CheckReg
                                     {
                                         throw new FormatException($"Line {lineNumber}: The value '{values[0]}' in the first column is not an integer.");
                                     }
-                                    
+
                                     // Check if we have enough columns
                                     if (values.Length < dt.Columns.Count)
                                     {
                                         throw new FormatException($"Line {lineNumber}: Not enough columns. Expected {dt.Columns.Count}, found {values.Length}.");
                                     }
-                                    
+
                                     // Add row, converting first column to int
                                     object[] row = new object[values.Length];
                                     row[0] = intVal;
@@ -187,7 +263,7 @@ namespace CheckReg
 
                 originalDataTable = dt.Copy();
                 dataGridView1.DataSource = dt;
-                
+
                 try
                 {
                     ResizeColumnsToContent();
@@ -199,7 +275,7 @@ namespace CheckReg
                     // Non-critical error, just log it
                     System.Diagnostics.Debug.WriteLine($"Error resizing columns: {ex.Message}");
                 }
-                
+
                 // Update status bar with row count
                 UpdateStatus($"Rows: {dt.Rows.Count}", $"File: {Path.GetFileName(filePath)}");
             }
@@ -225,7 +301,7 @@ namespace CheckReg
         private void ResizeColumnsToContent()
         {
             if (dataGridView1.DataSource == null) return;
-            
+
             using (Graphics g = dataGridView1.CreateGraphics())
             {
                 int lastCol = dataGridView1.ColumnCount - 1;
@@ -274,7 +350,7 @@ namespace CheckReg
                         {
                             dataTable.DefaultView.Sort = $"{col.DataPropertyName} {direction}";
                             col.HeaderCell.SortGlyphDirection = direction == "ASC" ? SortOrder.Ascending : SortOrder.Descending;
-                            
+
                             // Update status for sort
                             string sortInfo = $"Sorted by: {col.HeaderText} ({(direction == "ASC" ? "Ascending" : "Descending")})";
                             UpdateStatus($"Rows: {dataTable.Rows.Count}", sortInfo);
@@ -366,7 +442,7 @@ namespace CheckReg
                 if (originalDataTable != null)
                 {
                     dataGridView1.DataSource = originalDataTable.Copy();
-                    
+
                     // Update status - no filter active
                     UpdateStatus($"Rows: {originalDataTable.Rows.Count}", "No filter applied");
                 }
@@ -401,9 +477,9 @@ namespace CheckReg
                         dv.RowFilter = filter;
                         var filteredTable = dv.ToTable();
                         dataGridView1.DataSource = filteredTable;
-                        
+
                         // Update status with filter info
-                        UpdateStatus($"Rows: {filteredTable.Rows.Count} of {originalDataTable.Rows.Count}", 
+                        UpdateStatus($"Rows: {filteredTable.Rows.Count} of {originalDataTable.Rows.Count}",
                                      $"Filter: {displayColumnName} contains '{filterText}'");
                     }
                     catch (Exception ex)
@@ -411,7 +487,7 @@ namespace CheckReg
                         // Restore original data
                         dataGridView1.DataSource = originalDataTable.Copy();
                         UpdateStatus($"Rows: {originalDataTable.Rows.Count}", "Filter error - showing all data");
-                        
+
                         throw new Exception($"Error applying filter to column '{displayColumnName}'. " +
                                            $"The filter text '{filterText}' may contain invalid characters.", ex);
                     }
@@ -464,7 +540,7 @@ namespace CheckReg
                 HandleException(ex, "Closing application");
             }
         }
-        
+
         /// <summary>
         /// Central exception handler for displaying user-friendly error messages
         /// </summary>
@@ -476,12 +552,12 @@ namespace CheckReg
             {
                 innerException = innerException.InnerException;
             }
-            
+
             string errorMessage = $"An error occurred while {context}:\n\n{innerException.Message}";
-            
+
             // Log the full exception details for debugging
             System.Diagnostics.Debug.WriteLine($"ERROR in {context}: {ex}");
-            
+
             // Show user-friendly message
             MessageBox.Show(
                 errorMessage,
@@ -489,7 +565,7 @@ namespace CheckReg
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error
             );
-            
+
             // Update status bar
             UpdateStatus(rowCountLabel.Text, $"Error: {innerException.Message}");
         }
