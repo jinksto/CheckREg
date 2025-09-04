@@ -1,5 +1,0 @@
-C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\publish\CheckReg.exe
-C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\publish\CheckReg.dll
-C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\publish\CheckReg.deps.json
-C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\publish\CheckReg.runtimeconfig.json
-C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\publish\CheckReg.pdb
