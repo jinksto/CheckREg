@@ -1,0 +1,5 @@
+C:\SourceCode\c#\CheckReg\bin\publish\CheckReg.exe
+C:\SourceCode\c#\CheckReg\bin\publish\CheckReg.dll
+C:\SourceCode\c#\CheckReg\bin\publish\CheckReg.deps.json
+C:\SourceCode\c#\CheckReg\bin\publish\CheckReg.runtimeconfig.json
+C:\SourceCode\c#\CheckReg\bin\publish\CheckReg.pdb

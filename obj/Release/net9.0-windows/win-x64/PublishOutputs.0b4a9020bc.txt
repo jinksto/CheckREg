@@ -1,0 +1,2 @@
+C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\win-x64\publish\CheckReg.pdb
+C:\SourceCode\c#\CheckReg\bin\Release\net9.0-windows\win-x64\publish\CheckReg.exe
